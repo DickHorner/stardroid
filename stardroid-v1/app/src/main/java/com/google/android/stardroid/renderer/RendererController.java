@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,14 @@
 
 package com.google.android.stardroid.renderer;
 
+import android.content.SharedPreferences;
 import android.opengl.GLSurfaceView;
+import android.preference.PreferenceManager;
+
+import com.google.android.stardroid.ApplicationConstants;
+import com.google.android.stardroid.math.RaDec;
+import com.google.android.stardroid.math.Vector3;
+import com.google.android.stardroid.pushnav.PushNavTargetSender;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -65,6 +72,7 @@ public class RendererController extends RendererControllerBase {
   }
 
   private final EventQueuer mQueuer;
+  private final SharedPreferences sharedPreferences;
 
   @Override
   protected EventQueuer getQueuer() {
@@ -74,6 +82,16 @@ public class RendererController extends RendererControllerBase {
   public RendererController(SkyRenderer renderer, final GLSurfaceView view) {
     super(renderer);
     mQueuer = view::queueEvent;
+    sharedPreferences = PreferenceManager.getDefaultSharedPreferences(view.getContext());
+  }
+
+  @Override
+  public void queueEnableSearchOverlay(final Vector3 target, final String targetName) {
+    RaDec targetRaDec = RaDec.fromGeocentricCoords(target);
+    String serverUrl = sharedPreferences.getString(
+        ApplicationConstants.PUSHNAV_SERVER_URL_PREF_KEY, "");
+    PushNavTargetSender.sendAsync(serverUrl, targetRaDec.getRa(), targetRaDec.getDec());
+    super.queueEnableSearchOverlay(target, targetName);
   }
 
   @Override
