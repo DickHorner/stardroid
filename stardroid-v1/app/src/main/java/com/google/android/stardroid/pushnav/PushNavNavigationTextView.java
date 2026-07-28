@@ -31,9 +31,20 @@ public class PushNavNavigationTextView extends TextView {
   private static final String TAG = "PushNavNavigationView";
   private static final long RECONNECT_DELAY_MS = 2000;
 
+  static final class NavigationState {
+    final String text;
+    final float cameraAngleDeg;
+
+    NavigationState(String text, float cameraAngleDeg) {
+      this.text = text;
+      this.cameraAngleDeg = cameraAngleDeg;
+    }
+  }
+
   private volatile WebSocketClient client;
   private volatile boolean navigationVisible;
   private String lastText;
+  private PushNavArrowDrawable arrowDrawable;
   private final Runnable reconnect = this::connect;
 
   public PushNavNavigationTextView(Context context, AttributeSet attrs) {
@@ -81,9 +92,9 @@ public class PushNavNavigationTextView extends TextView {
 
         @Override
         public void onMessage(String message) {
-          String navigationText = parseNavigationText(message);
-          if (navigationText != null) {
-            updateText(navigationText);
+          NavigationState state = parseNavigationState(message);
+          if (state != null) {
+            updateNavigation(state);
           }
         }
 
@@ -127,11 +138,37 @@ public class PushNavNavigationTextView extends TextView {
 
   private void updateText(String text) {
     post(() -> {
+      clearArrow();
       if (!text.equals(lastText)) {
         lastText = text;
         setText(text);
       }
     });
+  }
+
+  private void updateNavigation(NavigationState state) {
+    post(() -> {
+      if (arrowDrawable == null) {
+        float density = getResources().getDisplayMetrics().density;
+        int sizePx = Math.round(32.0f * density);
+        arrowDrawable = new PushNavArrowDrawable(getCurrentTextColor(), 2.5f * density);
+        arrowDrawable.setBounds(0, 0, sizePx, sizePx);
+        setCompoundDrawablePadding(Math.round(8.0f * density));
+        setCompoundDrawablesRelative(arrowDrawable, null, null, null);
+      }
+      arrowDrawable.setAngleDeg(state.cameraAngleDeg);
+      if (!state.text.equals(lastText)) {
+        lastText = state.text;
+        setText(state.text);
+      }
+    });
+  }
+
+  private void clearArrow() {
+    if (arrowDrawable != null) {
+      arrowDrawable = null;
+      setCompoundDrawablesRelative(null, null, null, null);
+    }
   }
 
   static URI toWebSocketUri(String rawServerUrl) throws URISyntaxException {
@@ -140,15 +177,18 @@ public class PushNavNavigationTextView extends TextView {
     return new URI("ws", null, httpUri.getHost(), httpUri.getPort(), "/ws", null, null);
   }
 
-  static String parseNavigationText(String message) {
+  static NavigationState parseNavigationState(String message) {
     try {
       JSONObject nav = new JSONObject(message).optJSONObject("nav");
-      if (nav == null || !nav.optBoolean("active", false) || nav.isNull("separation_deg")) {
+      if (nav == null || !nav.optBoolean("active", false)
+          || nav.isNull("separation_deg") || nav.isNull("camera_angle_deg")) {
         return null;
       }
 
       double separation = nav.getDouble("separation_deg");
-      if (!Double.isFinite(separation) || separation < 0.0 || separation > 180.0) {
+      double cameraAngle = nav.getDouble("camera_angle_deg");
+      if (!Double.isFinite(separation) || separation < 0.0 || separation > 180.0
+          || !Double.isFinite(cameraAngle)) {
         return null;
       }
 
@@ -160,10 +200,17 @@ public class PushNavNavigationTextView extends TextView {
         direction = direction.substring(0, 80);
       }
 
-      return String.format(Locale.getDefault(), "PushNav: %.1f° · %s", separation, direction);
+      String text = String.format(
+          Locale.getDefault(), "PushNav: %.1f° · %s", separation, direction);
+      return new NavigationState(text, PushNavArrowDrawable.normalizeAngle((float) cameraAngle));
     } catch (JSONException e) {
       Log.w(TAG, "Ignoring invalid PushNav navigation payload", e);
       return null;
     }
+  }
+
+  static String parseNavigationText(String message) {
+    NavigationState state = parseNavigationState(message);
+    return state == null ? null : state.text;
   }
 }
