@@ -8,6 +8,8 @@
  */
 package com.google.android.stardroid.pushnav;
 
+import android.util.Log;
+
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -15,13 +17,30 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-/** Sends one selected Sky Map target to PushNav. */
+/** Sends selected Sky Map targets to PushNav. */
 public final class PushNavTargetSender {
+  private static final String TAG = "PushNavTargetSender";
   private static final int CONNECT_TIMEOUT_MS = 3000;
   private static final int READ_TIMEOUT_MS = 3000;
+  private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
   private PushNavTargetSender() {}
+
+  public static void sendAsync(String rawServerUrl, float raDeg, float decDeg) {
+    if (rawServerUrl == null || rawServerUrl.trim().isEmpty()) {
+      return;
+    }
+    EXECUTOR.execute(() -> {
+      try {
+        send(rawServerUrl, raDeg, decDeg);
+      } catch (IllegalArgumentException | IOException e) {
+        Log.w(TAG, "Unable to send target to PushNav", e);
+      }
+    });
+  }
 
   public static void send(String rawServerUrl, float raDeg, float decDeg) throws IOException {
     validateCoordinates(raDeg, decDeg);
