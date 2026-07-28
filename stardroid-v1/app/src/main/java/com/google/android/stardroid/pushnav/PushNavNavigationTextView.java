@@ -31,8 +31,8 @@ public class PushNavNavigationTextView extends TextView {
   private static final String TAG = "PushNavNavigationView";
   private static final long RECONNECT_DELAY_MS = 2000;
 
-  private WebSocketClient client;
-  private boolean navigationVisible;
+  private volatile WebSocketClient client;
+  private volatile boolean navigationVisible;
   private String lastText;
   private final Runnable reconnect = this::connect;
 
@@ -73,7 +73,7 @@ public class PushNavNavigationTextView extends TextView {
 
     try {
       URI websocketUri = toWebSocketUri(configuredUrl);
-      client = new WebSocketClient(websocketUri) {
+      WebSocketClient newClient = new WebSocketClient(websocketUri) {
         @Override
         public void onOpen(ServerHandshake handshake) {
           updateText(getContext().getString(R.string.pushnav_navigation_waiting));
@@ -89,8 +89,10 @@ public class PushNavNavigationTextView extends TextView {
 
         @Override
         public void onClose(int code, String reason, boolean remote) {
-          client = null;
-          scheduleReconnect();
+          if (client == this) {
+            client = null;
+            scheduleReconnect();
+          }
         }
 
         @Override
@@ -98,8 +100,9 @@ public class PushNavNavigationTextView extends TextView {
           Log.w(TAG, "PushNav WebSocket error", exception);
         }
       };
-      client.setConnectionLostTimeout(5);
-      client.connect();
+      newClient.setConnectionLostTimeout(5);
+      client = newClient;
+      newClient.connect();
     } catch (IllegalArgumentException | URISyntaxException e) {
       Log.w(TAG, "Invalid PushNav WebSocket address", e);
       client = null;
@@ -123,11 +126,12 @@ public class PushNavNavigationTextView extends TextView {
   }
 
   private void updateText(String text) {
-    if (text.equals(lastText)) {
-      return;
-    }
-    lastText = text;
-    post(() -> setText(text));
+    post(() -> {
+      if (!text.equals(lastText)) {
+        lastText = text;
+        setText(text);
+      }
+    });
   }
 
   static URI toWebSocketUri(String rawServerUrl) throws URISyntaxException {
