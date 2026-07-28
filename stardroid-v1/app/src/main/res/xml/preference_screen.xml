@@ -90,6 +90,21 @@
         android:defaultValue="STANDARD" />
   </PreferenceCategory>
 
+  <!-- PushNav Settings -->
+  <PreferenceCategory android:title="@string/pushnav_prefs">
+    <EditTextPreference
+        android:key="pushnav_server_url"
+        android:title="@string/pushnav_server_url_title"
+        android:summary="@string/pushnav_server_url_summary"
+        android:hint="@string/pushnav_server_url_hint"
+        android:inputType="textUri"
+        android:singleLine="true" />
+    <Preference
+        android:key="pushnav_test_connection"
+        android:title="@string/pushnav_test_connection_title"
+        android:summary="@string/pushnav_test_connection_summary" />
+  </PreferenceCategory>
+
   <!-- General Settings -->
   <PreferenceCategory android:title="@string/other_prefs">
     <CheckBoxPreference

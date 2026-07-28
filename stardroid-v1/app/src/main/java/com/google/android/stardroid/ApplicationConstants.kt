@@ -71,6 +71,10 @@ object ApplicationConstants {
   const val MANUAL_COMPASS_ADJUSTMENT_PREF_KEY = "manual_compass_adjustment"
   const val VIEW_MODE_PREF_KEY = "viewing_direction"
 
+  // PushNav
+  const val PUSHNAV_SERVER_URL_PREF_KEY = "pushnav_server_url"
+  const val PUSHNAV_TEST_CONNECTION_PREF_KEY = "pushnav_test_connection"
+
   // Night mode preference values (must match ActivityLightLevelManager.LightMode enum names)
   const val NIGHT_MODE_VALUE = "NIGHT"
 

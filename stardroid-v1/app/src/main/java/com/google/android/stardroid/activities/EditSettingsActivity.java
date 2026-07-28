@@ -20,6 +20,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.stardroid.ApplicationConstants;
 import com.google.android.stardroid.R;
@@ -27,8 +28,13 @@ import com.google.android.stardroid.activities.util.ActivityLightLevelChanger;
 import com.google.android.stardroid.activities.util.NightModeHelper;
 import com.google.android.stardroid.activities.util.ActivityLightLevelManager;
 import com.google.android.stardroid.activities.util.EdgeToEdgeFixer;
+import com.google.android.stardroid.pushnav.PushNavConnectionProbe;
 import com.google.android.stardroid.util.Analytics;
 import com.google.android.stardroid.util.MiscUtil;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import dagger.hilt.EntryPoint;
 import dagger.hilt.InstallIn;
@@ -69,6 +75,7 @@ public class EditSettingsActivity extends PreferenceActivity
   private ActivityLightLevelManager activityLightLevelManager;
   private Analytics analytics;
   private SharedPreferences sharedPreferences;
+  private final ExecutorService pushNavExecutor = Executors.newSingleThreadExecutor();
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -112,6 +119,41 @@ public class EditSettingsActivity extends PreferenceActivity
     enableNonGyroSensorPrefs(
         sharedPreferences.getBoolean(ApplicationConstants.SHARED_PREFERENCE_DISABLE_GYRO,
             false));
+    wirePushNavConnectionTest();
+  }
+
+  private void wirePushNavConnectionTest() {
+    Preference testPreference = preferenceFragment.findPreference(
+        ApplicationConstants.PUSHNAV_TEST_CONNECTION_PREF_KEY);
+    testPreference.setOnPreferenceClickListener(preference -> {
+      preference.setEnabled(false);
+      preference.setSummary(R.string.pushnav_connection_testing);
+      String serverUrl = sharedPreferences.getString(
+          ApplicationConstants.PUSHNAV_SERVER_URL_PREF_KEY, "");
+      pushNavExecutor.execute(() -> testPushNavConnection(preference, serverUrl));
+      return true;
+    });
+  }
+
+  private void testPushNavConnection(Preference preference, String serverUrl) {
+    String message;
+    try {
+      PushNavConnectionProbe.verify(serverUrl);
+      message = getString(R.string.pushnav_connection_success);
+    } catch (IllegalArgumentException | IOException e) {
+      Log.w(TAG, "PushNav connection test failed", e);
+      String reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+      message = getString(R.string.pushnav_connection_failed, reason);
+    }
+
+    runOnUiThread(() -> {
+      if (isFinishing() || isDestroyed()) {
+        return;
+      }
+      preference.setEnabled(true);
+      preference.setSummary(R.string.pushnav_test_connection_summary);
+      Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    });
   }
 
   @Override
@@ -125,6 +167,12 @@ public class EditSettingsActivity extends PreferenceActivity
     super.onPause();
     updatePreferences();
     activityLightLevelManager.onPause();
+  }
+
+  @Override
+  protected void onDestroy() {
+    pushNavExecutor.shutdownNow();
+    super.onDestroy();
   }
 
   private void enableNonGyroSensorPrefs(boolean enabled) {
