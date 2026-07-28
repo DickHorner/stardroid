@@ -35,7 +35,7 @@ android {
     }
 
     /**
-     * The app's namespace. Used primarily to access the R class.
+     * The app's namespace. Used primarily to access app resources.
      */
 
     namespace = 'com.google.android.stardroid'
@@ -51,7 +51,7 @@ android {
     /**
      * The defaultConfig block encapsulates default settings and entries for all
      * build variants and can override some attributes in main/AndroidManifest.xml
-     * dynamically. You can configure product flavors to override
+     * dynamically from the build system. You can configure product flavors to override
      * these values for different versions of your app.
      */
 
