@@ -53,7 +53,7 @@
                 android:paddingStart="10dip"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
-            <TextView
+            <com.google.android.stardroid.pushnav.PushNavNavigationTextView
                 android:id="@+id/search_prompt"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -230,4 +230,3 @@
         </RelativeLayout>
     </FrameLayout>
 </RelativeLayout>
-

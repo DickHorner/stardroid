@@ -9,4 +9,7 @@
   <string name="pushnav_connection_testing" translation_description="Temporary status shown while testing the PushNav connection">Testing PushNav connection…</string>
   <string name="pushnav_connection_success" translation_description="Toast shown when the PushNav connection test succeeds">Connected to PushNav</string>
   <string name="pushnav_connection_failed" translation_description="Toast shown when the PushNav connection test fails. %1$s contains the error reason">PushNav connection failed: %1$s</string>
+  <string name="pushnav_navigation_not_configured" translation_description="Search overlay message shown when no PushNav server address is configured">PushNav server is not configured</string>
+  <string name="pushnav_navigation_waiting" translation_description="Search overlay message shown while waiting for live PushNav navigation data">Waiting for PushNav navigation…</string>
+  <string name="pushnav_navigation_invalid_address" translation_description="Search overlay message shown when the configured PushNav server address is invalid">Invalid PushNav server address</string>
 </resources>
