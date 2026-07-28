@@ -11,45 +11,6 @@ community-maintained. The internal codename "Stardroid" remains in package names
 Codebase: Java and Kotlin, targeting Android SDK 26–36.
 github: https://github.com/sky-map-team/stardroid
 
-## Maintenance Discipline
-
-AI provides speed. The repository provides form. The machine provides limits. Evidence provides
-release.
-
-Before changing code:
-
-1. Read the relevant module, tests, and applicable specs.
-2. Inspect two or three nearby implementations that solve a similar problem.
-3. Follow their naming, placement, syntax, control flow, validation, error handling, imports, and
-   test structure.
-4. Define the narrow slice being changed. Do not widen it while implementing.
-5. Identify input shape, invariants, failure paths, trust boundaries, and meaningful machine costs.
-
-While changing code:
-
-- Prefer the smallest repository-native change that satisfies the requested behavior.
-- Do not add architecture, generic helpers, dependencies, flags, or configuration unless the
-  current slice requires them.
-- Do not mix feature work with unrelated refactors or formatting waves.
-- Reuse existing lifecycle owners, dependency injection, preferences, renderer queues, and test
-  seams before creating new ones.
-- Keep one source of truth for each decision. Do not duplicate navigation, coordinate, or state
-  logic across layers.
-- Treat network and persisted input as untrusted. Validate shape and ranges, bound waits and
-  retries, and never block the UI or GL thread.
-- Give every long-lived task an explicit lifecycle owner and shutdown path.
-
-Before completion:
-
-- Run the narrowest relevant syntax, unit-test, and build checks, then broaden only when useful.
-- Inspect the final diff for scope creep and accidental formatting changes.
-- Perform a delete-the-weird pass for unnecessary indirection, speculative helpers, duplicate
-  state, and awkward control flow.
-- Name the concrete repository precedents followed.
-- Never report a check as passed unless it was actually executed successfully. Record unavailable
-  checks and their concrete blocker.
-- Stop once the requested slice is fulfilled.
-
 ## Module Structure
 
 - **stardroid-v1/app/** - Main Android application (~171 source files)

@@ -25,16 +25,15 @@ import android.widget.Toast;
 import com.google.android.stardroid.ApplicationConstants;
 import com.google.android.stardroid.R;
 import com.google.android.stardroid.activities.util.ActivityLightLevelChanger;
-import com.google.android.stardroid.activities.util.NightModeHelper;
 import com.google.android.stardroid.activities.util.ActivityLightLevelManager;
 import com.google.android.stardroid.activities.util.EdgeToEdgeFixer;
+import com.google.android.stardroid.activities.util.NightModeHelper;
 import com.google.android.stardroid.pushnav.PushNavConnectionProbe;
 import com.google.android.stardroid.util.Analytics;
 import com.google.android.stardroid.util.MiscUtil;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import dagger.hilt.EntryPoint;
 import dagger.hilt.InstallIn;
@@ -53,6 +52,7 @@ public class EditSettingsActivity extends PreferenceActivity
   interface EditSettingsEntryPoint {
     Analytics analytics();
     SharedPreferences sharedPreferences();
+    ScheduledExecutorService backgroundExecutor();
   }
 
   public static class MyPreferenceFragment extends PreferenceFragment {
@@ -75,7 +75,7 @@ public class EditSettingsActivity extends PreferenceActivity
   private ActivityLightLevelManager activityLightLevelManager;
   private Analytics analytics;
   private SharedPreferences sharedPreferences;
-  private final ExecutorService pushNavExecutor = Executors.newSingleThreadExecutor();
+  private ScheduledExecutorService backgroundExecutor;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -85,6 +85,7 @@ public class EditSettingsActivity extends PreferenceActivity
         getApplicationContext(), EditSettingsEntryPoint.class);
     analytics = entryPoint.analytics();
     sharedPreferences = entryPoint.sharedPreferences();
+    backgroundExecutor = entryPoint.backgroundExecutor();
 
     ActivityLightLevelChanger lightLevelChanger = new ActivityLightLevelChanger(
         getWindow(), sharedPreferences, this);
@@ -130,7 +131,7 @@ public class EditSettingsActivity extends PreferenceActivity
       preference.setSummary(R.string.pushnav_connection_testing);
       String serverUrl = sharedPreferences.getString(
           ApplicationConstants.PUSHNAV_SERVER_URL_PREF_KEY, "");
-      pushNavExecutor.execute(() -> testPushNavConnection(preference, serverUrl));
+      backgroundExecutor.execute(() -> testPushNavConnection(preference, serverUrl));
       return true;
     });
   }
@@ -167,12 +168,6 @@ public class EditSettingsActivity extends PreferenceActivity
     super.onPause();
     updatePreferences();
     activityLightLevelManager.onPause();
-  }
-
-  @Override
-  protected void onDestroy() {
-    pushNavExecutor.shutdownNow();
-    super.onDestroy();
   }
 
   private void enableNonGyroSensorPrefs(boolean enabled) {
