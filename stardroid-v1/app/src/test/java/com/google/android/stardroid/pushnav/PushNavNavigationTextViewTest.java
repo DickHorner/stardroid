@@ -22,24 +22,52 @@ public class PushNavNavigationTextViewTest {
   }
 
   @Test
-  public void parseNavigationText_formatsActiveNavigation() {
+  public void parseNavigationState_formatsTextAndAngle() {
     String payload = "{\"nav\":{\"active\":true,\"separation_deg\":12.34,"
-        + "\"direction_text\":\"up-left\"}}";
+        + "\"direction_text\":\"up-left\",\"camera_angle_deg\":315.0}}";
 
-    assertEquals("PushNav: 12.3° · up-left",
-        PushNavNavigationTextView.parseNavigationText(payload));
+    PushNavNavigationTextView.NavigationState state =
+        PushNavNavigationTextView.parseNavigationState(payload);
+
+    assertEquals("PushNav: 12.3° · up-left", state.text);
+    assertEquals(315.0f, state.cameraAngleDeg, 0.001f);
   }
 
   @Test
-  public void parseNavigationText_ignoresMissingTarget() {
-    assertNull(PushNavNavigationTextView.parseNavigationText("{\"nav\":null}"));
+  public void parseNavigationState_normalizesNegativeAngle() {
+    String payload = "{\"nav\":{\"active\":true,\"separation_deg\":2.0,"
+        + "\"direction_text\":\"up-left\",\"camera_angle_deg\":-45.0}}";
+
+    PushNavNavigationTextView.NavigationState state =
+        PushNavNavigationTextView.parseNavigationState(payload);
+
+    assertEquals(315.0f, state.cameraAngleDeg, 0.001f);
   }
 
   @Test
-  public void parseNavigationText_ignoresInvalidSeparation() {
-    String payload = "{\"nav\":{\"active\":true,\"separation_deg\":181,"
+  public void parseNavigationState_ignoresMissingTarget() {
+    assertNull(PushNavNavigationTextView.parseNavigationState("{\"nav\":null}"));
+  }
+
+  @Test
+  public void parseNavigationState_ignoresMissingCameraAngle() {
+    String payload = "{\"nav\":{\"active\":true,\"separation_deg\":12.0,"
         + "\"direction_text\":\"left\"}}";
 
-    assertNull(PushNavNavigationTextView.parseNavigationText(payload));
+    assertNull(PushNavNavigationTextView.parseNavigationState(payload));
+  }
+
+  @Test
+  public void parseNavigationState_ignoresInvalidSeparation() {
+    String payload = "{\"nav\":{\"active\":true,\"separation_deg\":181,"
+        + "\"direction_text\":\"left\",\"camera_angle_deg\":270.0}}";
+
+    assertNull(PushNavNavigationTextView.parseNavigationState(payload));
+  }
+
+  @Test
+  public void normalizeAngle_wrapsFullTurns() {
+    assertEquals(5.0f, PushNavArrowDrawable.normalizeAngle(365.0f), 0.001f);
+    assertEquals(355.0f, PushNavArrowDrawable.normalizeAngle(-5.0f), 0.001f);
   }
 }
