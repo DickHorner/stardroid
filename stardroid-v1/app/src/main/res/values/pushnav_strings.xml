@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="pushnav_prefs" translation_description="Preferences category heading for PushNav telescope integration">PushNav</string>
+  <string name="pushnav_server_url_title" translation_description="Preference title for the PushNav server address">Server address</string>
+  <string name="pushnav_server_url_summary" translation_description="Preference summary explaining the PushNav server address format">Local PushNav URL, for example http://192.168.178.50:8765</string>
+  <string name="pushnav_server_url_hint" translatable="false">http://192.168.178.50:8765</string>
+  <string name="pushnav_test_connection_title" translation_description="Preference action title that tests the PushNav connection">Test connection</string>
+  <string name="pushnav_test_connection_summary" translation_description="Preference action summary for testing the PushNav connection">Check that the configured server is reachable and identifies itself as PushNav</string>
+  <string name="pushnav_connection_testing" translation_description="Temporary status shown while testing the PushNav connection">Testing PushNav connection…</string>
+  <string name="pushnav_connection_success" translation_description="Toast shown when the PushNav connection test succeeds">Connected to PushNav</string>
+  <string name="pushnav_connection_failed" translation_description="Toast shown when the PushNav connection test fails. %1$s contains the error reason">PushNav connection failed: %1$s</string>
+</resources>
