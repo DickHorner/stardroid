@@ -50,8 +50,11 @@ android {
 
     /**
      * The defaultConfig block encapsulates default settings and entries for all
-     * build variants and can override manifest placeholders and versioning values.
+     * build variants and can override some attributes in main/AndroidManifest.xml
+     * dynamically from the build system. You can configure product flavors to override
+     * these values for different versions of your app.
      */
+
     defaultConfig {
         // Uniquely identifies the package for publishing.
         applicationId 'com.google.android.stardroid'
@@ -125,6 +128,7 @@ android {
             dimension "sourciness"
         }
     }
+
 }
 
 /**
