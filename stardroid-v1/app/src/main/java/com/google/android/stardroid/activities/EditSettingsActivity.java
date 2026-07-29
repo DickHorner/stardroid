@@ -147,13 +147,14 @@ public class EditSettingsActivity extends PreferenceActivity
       message = getString(R.string.pushnav_connection_failed, reason);
     }
 
+    String toastMessage = message;
     runOnUiThread(() -> {
       if (isFinishing() || isDestroyed()) {
         return;
       }
       preference.setEnabled(true);
       preference.setSummary(R.string.pushnav_test_connection_summary);
-      Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+      Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show();
     });
   }
 
