@@ -1,5 +1,6 @@
 package com.google.android.stardroid.pushnav
 
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -17,12 +18,18 @@ class PushNavNavigationTextViewTest {
 
   @Test
   fun parseNavigationState_formatsTextAndAngle() {
-    val payload = """{"nav":{"active":true,"separation_deg":12.34,"direction_text":"up-left","camera_angle_deg":315.0}}"""
+    val previousLocale = Locale.getDefault()
+    try {
+      Locale.setDefault(Locale.US)
+      val payload = """{"nav":{"active":true,"separation_deg":12.34,"direction_text":"up-left","camera_angle_deg":315.0}}"""
 
-    val state = PushNavNavigationTextView.parseNavigationState(payload)
+      val state = PushNavNavigationTextView.parseNavigationState(payload)
 
-    assertEquals("PushNav: 12.3° · up-left", state?.text)
-    assertEquals(315.0f, state?.cameraAngleDeg ?: Float.NaN, 0.001f)
+      assertEquals("PushNav: 12.3° · up-left", state?.text)
+      assertEquals(315.0f, state?.cameraAngleDeg ?: Float.NaN, 0.001f)
+    } finally {
+      Locale.setDefault(previousLocale)
+    }
   }
 
   @Test
