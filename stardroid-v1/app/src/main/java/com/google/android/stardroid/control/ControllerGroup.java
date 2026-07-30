@@ -40,17 +40,20 @@ public class ControllerGroup implements Controller {
   private final ZoomController zoomController;
   private final ManualOrientationController manualDirectionController;
   private final SensorOrientationController sensorOrientationController;
+  private final PushNavOrientationController pushNavOrientationController;
   private final TimeTravelClock timeTravelClock = new TimeTravelClock();
   private final TransitioningCompositeClock transitioningClock = new TransitioningCompositeClock(
       timeTravelClock, new RealClock());
   private final TeleportingController teleportingController;
   private boolean usingAutoMode = true;
+  private boolean usingPushNav = false;
   private AstronomerModel model;
   private final LocationController locationController;
 
   // TODO(jontayler): inject everything else.
   @Inject
   ControllerGroup(SensorOrientationController sensorOrientationController,
+                  PushNavOrientationController pushNavOrientationController,
                   LocationController locationController) {
     this.locationController = locationController;
     addController(locationController);
@@ -58,6 +61,8 @@ public class ControllerGroup implements Controller {
     addController(sensorOrientationController);
     manualDirectionController = new ManualOrientationController();
     addController(manualDirectionController);
+    this.pushNavOrientationController = pushNavOrientationController;
+    addController(pushNavOrientationController);
     zoomController = new ZoomController();
     addController(zoomController);
     teleportingController = new TeleportingController();
@@ -80,7 +85,7 @@ public class ControllerGroup implements Controller {
       controller.setModel(model);
     }
     this.model = model;
-    model.setAutoUpdatePointing(usingAutoMode);
+    applyOrientationMode();
     model.setClock(transitioningClock);
   }
 
@@ -137,6 +142,10 @@ public class ControllerGroup implements Controller {
     return usingAutoMode;
   }
 
+  public boolean isPushNavMode() {
+    return usingPushNav;
+  }
+
   public LocationController getLocationController() {
     return locationController;
   }
@@ -145,17 +154,28 @@ public class ControllerGroup implements Controller {
    * Sets auto mode (true) or manual mode (false).
    */
   public void setAutoMode(boolean enabled) {
-    manualDirectionController.setEnabled(!enabled);
-    sensorOrientationController.setEnabled(enabled);
-    if (model != null) {
-      model.setAutoUpdatePointing(enabled);
-    }
     usingAutoMode = enabled;
+    applyOrientationMode();
+  }
+
+  private void setPushNavMode(boolean enabled) {
+    usingPushNav = enabled;
+    applyOrientationMode();
+  }
+
+  private void applyOrientationMode() {
+    manualDirectionController.setEnabled(!usingPushNav && !usingAutoMode);
+    sensorOrientationController.setEnabled(!usingPushNav && usingAutoMode);
+    pushNavOrientationController.setEnabled(usingPushNav);
+    if (model != null) {
+      model.setAutoUpdatePointing(!usingPushNav && usingAutoMode);
+    }
   }
 
   @Override
   public void start() {
     Log.i(TAG, "Starting controllers");
+    setPushNavMode(pushNavOrientationController.isConfigured());
     for (Controller controller : controllers) {
       controller.start();
     }
@@ -202,7 +222,9 @@ public class ControllerGroup implements Controller {
    * @param target the destination
    */
   public void teleport(Vector3 target) {
-    teleportingController.teleport(target);
+    if (!usingPushNav) {
+      teleportingController.teleport(target);
+    }
   }
   
   /**
