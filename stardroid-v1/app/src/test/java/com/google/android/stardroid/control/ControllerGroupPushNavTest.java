@@ -2,9 +2,9 @@ package com.google.android.stardroid.control;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.junit.Test;
 
@@ -15,7 +15,7 @@ public class ControllerGroupPushNavTest {
     PushNavOrientationController pushNavController = mock(PushNavOrientationController.class);
     LocationController locationController = mock(LocationController.class);
     AstronomerModel model = mock(AstronomerModel.class);
-    when(pushNavController.isConfigured()).thenReturn(true);
+    doReturn(true).when(pushNavController).isConfigured();
 
     ControllerGroup controllerGroup = new ControllerGroup(
         sensorController, pushNavController, locationController);
@@ -36,7 +36,7 @@ public class ControllerGroupPushNavTest {
     PushNavOrientationController pushNavController = mock(PushNavOrientationController.class);
     LocationController locationController = mock(LocationController.class);
     AstronomerModel model = mock(AstronomerModel.class);
-    when(pushNavController.isConfigured()).thenReturn(true);
+    doReturn(true).when(pushNavController).isConfigured();
 
     ControllerGroup controllerGroup = new ControllerGroup(
         sensorController, pushNavController, locationController);
