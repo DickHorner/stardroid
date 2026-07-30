@@ -17,7 +17,7 @@ import javax.inject.Inject
 import kotlin.math.cos
 import kotlin.math.sin
 
-class PushNavOrientationController @Inject constructor(
+open class PushNavOrientationController @Inject constructor(
     private val sharedPreferences: SharedPreferences,
     private val handler: Handler,
 ) : AbstractController() {
