@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.stardroid.observing.ObservationListMenuButton
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/observation_list_action_button"
+    style="?android:attr/actionButtonStyle"
+    android:layout_width="?android:attr/actionBarSize"
+    android:layout_height="?android:attr/actionBarSize"
+    android:contentDescription="@string/observation_list_title"
+    android:scaleType="centerInside"
+    android:src="@drawable/ic_observation_list" />
