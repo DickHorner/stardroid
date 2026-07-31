@@ -70,7 +70,7 @@ class ObservationListStore @Inject constructor(
 
     private fun writeEntries(entries: List<String>) {
         val array = JSONArray()
-        entries.forEach(array::put)
+        entries.forEach { array.put(it) }
         sharedPreferences.edit().putString(PREFERENCE_KEY, array.toString()).apply()
     }
 
