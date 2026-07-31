@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.PorterDuff
 import android.util.AttributeSet
-import androidx.appcompat.widget.AppCompatImageButton
+import android.widget.ImageButton
 import com.google.android.stardroid.R
 import com.google.android.stardroid.activities.dialogs.ObservationListDialogFragment
 import com.google.android.stardroid.activities.util.ActivityLightLevelManager
@@ -13,7 +13,7 @@ import dagger.hilt.android.EntryPointAccessors
 class ObservationListMenuButton @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-) : AppCompatImageButton(context, attrs), SharedPreferences.OnSharedPreferenceChangeListener {
+) : ImageButton(context, attrs), SharedPreferences.OnSharedPreferenceChangeListener {
     private val entryPoint: ObservationListEntryPoint by lazy {
         EntryPointAccessors.fromApplication(
             context.applicationContext,
