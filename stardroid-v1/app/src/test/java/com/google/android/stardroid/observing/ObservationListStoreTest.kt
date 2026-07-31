@@ -3,6 +3,8 @@ package com.google.android.stardroid.observing
 import androidx.preference.PreferenceManager
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +46,26 @@ class ObservationListStoreTest {
             ObservationListStore.AddResult.ALREADY_PRESENT,
             store.add(" m13 "),
         )
+        assertEquals(listOf("M13"), store.entries())
+    }
+
+    @Test
+    fun remove_deletesOnlyMatchingEntry() {
+        store.add("M13")
+        store.add("M29")
+        store.add("M52")
+
+        assertTrue(store.remove(" m29 "))
+
+        assertEquals(listOf("M13", "M52"), store.entries())
+    }
+
+    @Test
+    fun remove_unknownEntryLeavesListUntouched() {
+        store.add("M13")
+
+        assertFalse(store.remove("M29"))
+
         assertEquals(listOf("M13"), store.entries())
     }
 
