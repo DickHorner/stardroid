@@ -8,14 +8,14 @@ import com.google.android.stardroid.R
 import com.google.android.stardroid.activities.dialogs.ObservationListDialogFragment
 
 class ObservationListActionProvider(
-    context: Context,
-) : ActionProvider(context) {
+    private val providerContext: Context,
+) : ActionProvider(providerContext) {
     override fun onCreateActionView(): View {
-        return LayoutInflater.from(context)
+        return LayoutInflater.from(providerContext)
             .inflate(R.layout.observation_list_action_item, null)
     }
 
     override fun onPerformDefaultAction(): Boolean {
-        return ObservationListDialogFragment.show(context)
+        return ObservationListDialogFragment.show(providerContext)
     }
 }
