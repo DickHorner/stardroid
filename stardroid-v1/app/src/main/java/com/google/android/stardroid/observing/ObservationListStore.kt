@@ -41,6 +41,28 @@ class ObservationListStore @Inject constructor(
         return AddResult.ADDED
     }
 
+    fun remove(name: String): Boolean {
+        val normalizedKey = name.trim().lowercase(Locale.ROOT)
+        if (normalizedKey.isEmpty()) {
+            return false
+        }
+
+        val entries = readEntries()
+        val remainingEntries = entries.filterNot {
+            it.lowercase(Locale.ROOT) == normalizedKey
+        }
+        if (remainingEntries.size == entries.size) {
+            return false
+        }
+
+        if (remainingEntries.isEmpty()) {
+            clear()
+        } else {
+            writeEntries(remainingEntries)
+        }
+        return true
+    }
+
     fun clear() {
         sharedPreferences.edit().remove(PREFERENCE_KEY).apply()
     }

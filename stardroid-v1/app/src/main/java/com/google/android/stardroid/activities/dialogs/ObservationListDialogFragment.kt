@@ -6,7 +6,15 @@ import android.app.SearchManager
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.graphics.PorterDuff
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.ImageButton
+import android.widget.ListView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import com.google.android.stardroid.R
@@ -26,30 +34,57 @@ class ObservationListDialogFragment : DialogFragment() {
     lateinit var sharedPreferences: android.content.SharedPreferences
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val entries = observationListStore.entries()
         val isNight = ActivityLightLevelManager.isNightMode(sharedPreferences)
-        val builder = AlertDialog.Builder(requireActivity())
-            .setTitle(R.string.observation_list_title)
-            .setNegativeButton(android.R.string.cancel, null)
+        val contentView = requireActivity().layoutInflater.inflate(
+            R.layout.observation_list_dialog,
+            null,
+        )
+        val listView = contentView.findViewById<ListView>(R.id.observation_list_items)
+        val emptyView = contentView.findViewById<TextView>(R.id.observation_list_empty_message)
+        if (isNight) {
+            emptyView.setTextColor(requireContext().getColor(R.color.night_text_color))
+        }
+        listView.emptyView = emptyView
 
-        if (entries.isEmpty()) {
-            builder.setMessage(R.string.observation_list_empty)
-        } else {
-            builder.setItems(entries.toTypedArray()) { dialog, index ->
-                dialog.dismiss()
-                openTarget(entries[index])
+        lateinit var dialog: AlertDialog
+        lateinit var adapter: ObservationListAdapter
+        adapter = ObservationListAdapter(
+            requireContext(),
+            observationListStore.entries().toMutableList(),
+            isNight,
+        ) { targetName ->
+            if (observationListStore.remove(targetName)) {
+                adapter.remove(targetName)
+                updateClearButton(dialog, adapter.count)
             }
-            builder.setNeutralButton(R.string.observation_list_clear, null)
+        }
+        listView.adapter = adapter
+        listView.setOnItemClickListener { _, _, position, _ ->
+            adapter.getItem(position)?.let { targetName ->
+                dismiss()
+                openTarget(targetName)
+            }
         }
 
-        val dialog = builder.create()
+        dialog = AlertDialog.Builder(requireActivity())
+            .setTitle(R.string.observation_list_title)
+            .setView(contentView)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setNeutralButton(R.string.observation_list_clear, null)
+            .create()
         dialog.setOnShowListener {
             NightModeHelper.applyAlertDialogNightMode(dialog, isNight)
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setOnClickListener {
+            updateClearButton(dialog, adapter.count)
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
                 showClearConfirmation(isNight)
             }
         }
         return dialog
+    }
+
+    private fun updateClearButton(dialog: AlertDialog, itemCount: Int) {
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.visibility =
+            if (itemCount > 0) View.VISIBLE else View.GONE
     }
 
     private fun openTarget(targetName: String) {
@@ -79,6 +114,40 @@ class ObservationListDialogFragment : DialogFragment() {
             NightModeHelper.applyAlertDialogNightMode(confirmation, isNight)
         }
         confirmation.show()
+    }
+
+    private class ObservationListAdapter(
+        context: Context,
+        entries: MutableList<String>,
+        private val isNight: Boolean,
+        private val onRemove: (String) -> Unit,
+    ) : ArrayAdapter<String>(context, R.layout.observation_list_item, entries) {
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val view = convertView ?: LayoutInflater.from(context).inflate(
+                R.layout.observation_list_item,
+                parent,
+                false,
+            )
+            val targetName = getItem(position).orEmpty()
+            val nameView = view.findViewById<TextView>(R.id.observation_list_item_name)
+            val removeButton = view.findViewById<ImageButton>(R.id.observation_list_item_remove)
+
+            nameView.text = targetName
+            removeButton.contentDescription = context.getString(
+                R.string.observation_list_remove_item,
+                targetName,
+            )
+            removeButton.setOnClickListener { onRemove(targetName) }
+
+            if (isNight) {
+                val color = context.getColor(R.color.night_text_color)
+                nameView.setTextColor(color)
+                removeButton.setColorFilter(color, PorterDuff.Mode.MULTIPLY)
+            } else {
+                removeButton.clearColorFilter()
+            }
+            return view
+        }
     }
 
     companion object {
