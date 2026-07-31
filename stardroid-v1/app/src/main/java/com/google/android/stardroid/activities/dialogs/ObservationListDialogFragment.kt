@@ -46,7 +46,7 @@ class ObservationListDialogFragment : DialogFragment() {
         dialog.setOnShowListener {
             NightModeHelper.applyAlertDialogNightMode(dialog, isNight)
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setOnClickListener {
-                showClearConfirmation(dialog, isNight)
+                showClearConfirmation(isNight)
             }
         }
         return dialog
@@ -60,14 +60,14 @@ class ObservationListDialogFragment : DialogFragment() {
         startActivity(intent)
     }
 
-    private fun showClearConfirmation(parentDialog: AlertDialog, isNight: Boolean) {
+    private fun showClearConfirmation(isNight: Boolean) {
         val confirmation = AlertDialog.Builder(requireActivity())
             .setTitle(R.string.observation_list_clear_confirm_title)
             .setMessage(R.string.observation_list_clear_confirm_message)
             .setNegativeButton(android.R.string.no, null)
             .setPositiveButton(android.R.string.yes) { _, _ ->
                 observationListStore.clear()
-                parentDialog.dismiss()
+                dismiss()
                 Toast.makeText(
                     requireContext(),
                     R.string.observation_list_cleared,
