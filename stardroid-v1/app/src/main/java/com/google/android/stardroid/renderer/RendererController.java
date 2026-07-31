@@ -20,6 +20,7 @@ import android.opengl.GLSurfaceView;
 import com.google.android.stardroid.ApplicationConstants;
 import com.google.android.stardroid.math.RaDec;
 import com.google.android.stardroid.math.Vector3;
+import com.google.android.stardroid.observing.CurrentSearchTarget;
 import com.google.android.stardroid.pushnav.PushNavTargetSender;
 
 import java.util.LinkedList;
@@ -103,12 +104,19 @@ public class RendererController extends RendererControllerBase {
 
   @Override
   public void queueEnableSearchOverlay(final Vector3 target, final String targetName) {
+    CurrentSearchTarget.update(targetName);
     RaDec targetRaDec = RaDec.fromGeocentricCoords(target);
     String serverUrl = sharedPreferences.getString(
         ApplicationConstants.PUSHNAV_SERVER_URL_PREF_KEY, "");
     PushNavTargetSender.sendAsync(
         backgroundExecutor, serverUrl, targetRaDec.getRa(), targetRaDec.getDec());
     super.queueEnableSearchOverlay(target, targetName);
+  }
+
+  @Override
+  public void queueDisableSearchOverlay() {
+    CurrentSearchTarget.clear();
+    super.queueDisableSearchOverlay();
   }
 
   @Override
