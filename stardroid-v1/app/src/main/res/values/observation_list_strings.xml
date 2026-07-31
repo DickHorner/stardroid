@@ -3,6 +3,7 @@
     <string name="observation_list_title" translation_description="Menu item and dialog title for the list of objects planned for an observing session">Observation list</string>
     <string name="observation_list_add_current" translation_description="Content description for a button that adds the current Sky Map search target to the observation list">Add current target to observation list</string>
     <string name="observation_list_empty" translation_description="Message shown when the observation list has no objects">The observation list is empty.</string>
+    <string name="observation_list_remove_item" translation_description="Accessibility label for removing one named object from the observation list">Remove %1$s from observation list</string>
     <string name="observation_list_clear" translation_description="Button that removes every object from the observation list">Clear list</string>
     <string name="observation_list_clear_confirm_title" translation_description="Title of the confirmation dialog before clearing the observation list">Clear observation list?</string>
     <string name="observation_list_clear_confirm_message" translation_description="Confirmation message before removing every object from the observation list">Remove all objects from the observation list?</string>
