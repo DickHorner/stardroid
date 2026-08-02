@@ -18,8 +18,6 @@ import android.content.res.Resources;
 import android.opengl.GLU;
 import android.util.Log;
 
-import com.google.android.stardroid.math.MathUtils;
-import com.google.android.stardroid.math.Matrix4x4;
 import com.google.android.stardroid.math.Vector3;
 import com.google.android.stardroid.renderer.util.ColoredQuad;
 import com.google.android.stardroid.renderer.util.SearchHelper;
@@ -30,12 +28,8 @@ import javax.microedition.khronos.opengles.GL10;
 public class OverlayManager extends RendererObjectManager {
   private int mWidth = 2;
   private int mHeight = 2;
-  private Matrix4x4 mGeoToViewerTransform = Matrix4x4.createIdentity();
   private Vector3 mLookDir = new Vector3(0, 0, 0);
   private Vector3 mUpDir = new Vector3(0, 1, 0);
-  private Vector3 mTransformedLookDir = new Vector3(0, 0, 0);
-  private Vector3 mTransformedUpDir = new Vector3(0, 1, 0);
-  private boolean mMustUpdateTransformedOrientation = true;
 
   private boolean mSearching = false;
   private SearchHelper mSearchHelper = new SearchHelper();
@@ -73,13 +67,10 @@ public class OverlayManager extends RendererObjectManager {
   public void setViewOrientation(Vector3 lookDir, Vector3 upDir) {
     mLookDir = lookDir;
     mUpDir = upDir;
-    mMustUpdateTransformedOrientation = true;
   }
 
   @Override
   public void drawInternal(GL10 gl) {
-    updateTransformedOrientationIfNecessary();
-
     setupMatrices(gl);
 
     if (mSearching) {
@@ -89,23 +80,15 @@ public class OverlayManager extends RendererObjectManager {
 
       mDarkQuad.draw(gl);
       mCrosshair.draw(gl, mSearchHelper, getRenderState().getNightVisionMode());
-      mSearchArrow.draw(gl, mTransformedLookDir, mTransformedUpDir, mSearchHelper,
+      mSearchArrow.draw(gl, mLookDir, mUpDir, mSearchHelper,
                         getRenderState().getNightVisionMode());
     }
 
     restoreMatrices(gl);
   }
 
-  // viewerUp MUST be normalized.
   public void setViewerUpDirection(Vector3 viewerUp) {
-    if (MathUtils.abs(viewerUp.y) < 0.999f) {
-      Vector3 cp = viewerUp.times(new Vector3(0, 1, 0));
-      cp = cp.normalizedCopy();
-      mGeoToViewerTransform = Matrix4x4.createRotation(MathUtils.acos(viewerUp.y), cp);
-    } else {
-      mGeoToViewerTransform = Matrix4x4.createIdentity();
-    }
-    mMustUpdateTransformedOrientation = true;
+    // Search guidance is projected directly in the current look/up basis.
   }
 
   public void enableSearchOverlay(Vector3 target, String targetName) {
@@ -113,8 +96,7 @@ public class OverlayManager extends RendererObjectManager {
     mSearching = true;
     mSearchHelper.setTransform(getRenderState().getTransformToDeviceMatrix());
     mSearchHelper.setTarget(target, targetName);
-    Vector3 transformedPosition = Matrix4x4.multiplyMV(mGeoToViewerTransform, target);
-    mSearchArrow.setTarget(transformedPosition);
+    mSearchArrow.setTarget(target);
     queueForReload(false);
   }
 
@@ -146,13 +128,5 @@ public class OverlayManager extends RendererObjectManager {
 
     gl.glMatrixMode(GL10.GL_MODELVIEW);
     gl.glPopMatrix();
-  }
-
-  private void updateTransformedOrientationIfNecessary() {
-    if (mMustUpdateTransformedOrientation && mSearching) {
-      mTransformedLookDir = Matrix4x4.multiplyMV(mGeoToViewerTransform, mLookDir);
-      mTransformedUpDir = Matrix4x4.multiplyMV(mGeoToViewerTransform, mUpDir);
-      mMustUpdateTransformedOrientation = false;
-    }
   }
 }
