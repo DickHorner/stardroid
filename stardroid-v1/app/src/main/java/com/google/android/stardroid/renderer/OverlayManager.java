@@ -42,7 +42,7 @@ public class OverlayManager extends RendererObjectManager {
   private ColoredQuad mDarkQuad = null;
   private SearchArrow mSearchArrow = new SearchArrow();
   private CrosshairOverlay mCrosshair = new CrosshairOverlay();
-  
+
   private TextureManager mTextureManager;
 
   public OverlayManager(int layer, TextureManager manager) {
@@ -60,13 +60,8 @@ public class OverlayManager extends RendererObjectManager {
     mWidth = screenWidth;
     mHeight = screenHeight;
 
-    // If the search target is within this radius of the center of the screen, the user is
-    // considered to have "found" it.
-    float searchTargetRadius = Math.min(screenWidth, screenHeight) - 20;
-    mSearchHelper.setTargetFocusRadius(searchTargetRadius);
     mSearchHelper.resize(screenWidth, screenHeight);
-
-    mSearchArrow.resize(gl, screenWidth, screenHeight, searchTargetRadius);
+    mSearchArrow.resize(gl, screenWidth, screenHeight);
     mCrosshair.resize(gl, screenWidth, screenHeight);
 
     mDarkQuad = new ColoredQuad(0, 0, 0, 0.6f,
@@ -89,17 +84,11 @@ public class OverlayManager extends RendererObjectManager {
 
     if (mSearching) {
       mSearchHelper.setTransform(getRenderState().getTransformToDeviceMatrix());
+      mSearchHelper.setLookDirection(mLookDir);
       mSearchHelper.checkState();
 
-      float transitionFactor = mSearchHelper.getTransitionFactor();
-
-      // Darken the background.
       mDarkQuad.draw(gl);
-
-      // Draw the crosshair.
       mCrosshair.draw(gl, mSearchHelper, getRenderState().getNightVisionMode());
-
-      // Draw the search arrow.
       mSearchArrow.draw(gl, mTransformedLookDir, mTransformedUpDir, mSearchHelper,
                         getRenderState().getNightVisionMode());
     }
@@ -109,7 +98,6 @@ public class OverlayManager extends RendererObjectManager {
 
   // viewerUp MUST be normalized.
   public void setViewerUpDirection(Vector3 viewerUp) {
-    // Log.d("OverlayManager", "Setting viewer up " + viewerUp);
     if (MathUtils.abs(viewerUp.y) < 0.999f) {
       Vector3 cp = viewerUp.times(new Vector3(0, 1, 0));
       cp = cp.normalizedCopy();
@@ -139,7 +127,6 @@ public class OverlayManager extends RendererObjectManager {
   }
 
   private void setupMatrices(GL10 gl) {
-    // Save the matrix values.
     gl.glMatrixMode(GL10.GL_PROJECTION);
     gl.glPushMatrix();
     gl.glLoadIdentity();
@@ -153,7 +140,6 @@ public class OverlayManager extends RendererObjectManager {
   }
 
   private void restoreMatrices(GL10 gl) {
-    // Restore the matrices.
     gl.glMatrixMode(GL10.GL_PROJECTION);
     gl.glPopMatrix();
 
