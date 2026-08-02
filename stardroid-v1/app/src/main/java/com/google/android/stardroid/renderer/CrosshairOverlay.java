@@ -48,12 +48,14 @@ public class CrosshairOverlay {
     gl.glLoadIdentity();
     gl.glEnable(GL10.GL_BLEND);
     gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    gl.glTexEnvf(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE, GL10.GL_MODULATE);
 
     drawCenterMarker(gl, nightVisionMode);
     if (searchHelper.isTargetOnScreen()) {
       drawTargetMarker(gl, searchHelper, nightVisionMode);
     }
 
+    gl.glTexEnvf(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE, GL10.GL_REPLACE);
     gl.glDisable(GL10.GL_BLEND);
     gl.glPopMatrix();
   }
