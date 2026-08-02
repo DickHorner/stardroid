@@ -19,89 +19,78 @@ import com.google.android.stardroid.math.Matrix4x4;
 import com.google.android.stardroid.math.Vector3;
 
 public class SearchHelper {
+  static final float CENTERED_ENTER_DEGREES = 0.10f;
+  static final float CENTERED_EXIT_DEGREES = 0.15f;
+  private static final float TARGET_SCREEN_MARGIN = 0.92f;
+
   public void resize(int width, int height) {
-    mHalfScreenWidth = width * 0.5f;
-    mHalfScreenHeight = height * 0.5f;
+    // Kept as part of the renderer lifecycle. Screen-space guidance uses normalized
+    // device coordinates and therefore needs no cached pixel dimensions here.
   }
-  
+
   public void setTarget(Vector3 target, String targetName) {
     mTargetName = targetName;
-    mTarget = target.copyForJ();
+    mTarget = target.normalizedCopy();
     mTransformedPosition = null;
-    mLastUpdateTime = System.currentTimeMillis();
-    mTransitionFactor = targetInFocusRadiusImpl() ? 1 : 0;
+    mWasInFocusLastCheck = false;
   }
-  
+
   public void setTransform(Matrix4x4 transformMatrix) {
     mTransformMatrix = transformMatrix;
     mTransformedPosition = null;
   }
-  
+
+  public void setLookDirection(Vector3 lookDirection) {
+    mLookDirection = lookDirection.normalizedCopy();
+  }
+
   public Vector3 getTransformedPosition() {
     if (mTransformedPosition == null && mTransformMatrix != null) {
-      // Transform the label position by our transform matrix
       mTransformedPosition = Matrix4x4.transformVector(mTransformMatrix, mTarget);
     }
     return mTransformedPosition;
   }
-  
+
   public boolean targetInFocusRadius() {
     return mWasInFocusLastCheck;
   }
-  
-  public void setTargetFocusRadius(float radius) {
-    mTargetFocusRadius = radius;
+
+  public boolean isTargetOnScreen() {
+    Vector3 position = getTransformedPosition();
+    return position != null
+        && position.z > 0
+        && MathUtils.abs(position.x) <= TARGET_SCREEN_MARGIN
+        && MathUtils.abs(position.y) <= TARGET_SCREEN_MARGIN;
   }
-  
-  // Returns a number between 0 and 1, 0 meaning that we should draw the UI as if the target
-  // is not in focus, 1 meaning it should be fully in focus, and between the two meaning
-  // it just transitioned between the two, so we should be drawing the transition.
+
+  public float getAngularSeparationDegrees() {
+    float dot = mTarget.dot(mLookDirection);
+    dot = Math.max(-1.0f, Math.min(1.0f, dot));
+    return (float) Math.toDegrees(MathUtils.acos(dot));
+  }
+
+  // Retained for callers that still model the old animated focus transition.
   public float getTransitionFactor() {
-    return mTransitionFactor;
+    return mWasInFocusLastCheck ? 1.0f : 0.0f;
   }
-  
-  // Checks whether the search target is in the focus or not, and updates the seconds in the state
-  // accordingly.
+
   public void checkState() {
-    boolean inFocus = targetInFocusRadiusImpl();
-    mWasInFocusLastCheck = inFocus;
-    long time = System.currentTimeMillis();
-    float delta = 0.001f * (time - mLastUpdateTime);
-    mTransitionFactor += delta * (inFocus ? 1 : -1);
-    mTransitionFactor = Math.min(1, Math.max(0, mTransitionFactor));
-    mLastUpdateTime = time;
+    float separationDegrees = getAngularSeparationDegrees();
+    if (mWasInFocusLastCheck) {
+      mWasInFocusLastCheck = separationDegrees <= CENTERED_EXIT_DEGREES;
+    } else {
+      mWasInFocusLastCheck = separationDegrees <= CENTERED_ENTER_DEGREES;
+    }
   }
-  
+
   public String getTargetName() {
     return mTargetName;
   }
-  
-  // Returns the distance from the center of the screen, in pixels, if the target is in front of
-  // the viewer.  Returns infinity if the point is behind the viewer.
-  private float getDistanceFromCenterOfScreen() {
-    Vector3 position = getTransformedPosition();
-    if (position.z > 0) {
-      float dx = position.x * mHalfScreenWidth;
-      float dy = position.y * mHalfScreenHeight;
-      return MathUtils.sqrt(dx*dx + dy*dy);
-    } else {
-      return Float.POSITIVE_INFINITY;
-    }
-  }
-  
-  private boolean targetInFocusRadiusImpl() {
-    float distFromCenter = getDistanceFromCenterOfScreen();
-    return 0.5f * mTargetFocusRadius > distFromCenter;
-  }
-  
-  private Vector3 mTarget = new Vector3(0, 0, 0);
-  private Vector3 mTransformedPosition = new Vector3(0, 0, 0);
-  private float mHalfScreenWidth = 1;
-  private float mHalfScreenHeight = 1;
+
+  private Vector3 mTarget = new Vector3(0, 0, 1);
+  private Vector3 mLookDirection = new Vector3(0, 0, 1);
+  private Vector3 mTransformedPosition = null;
   private Matrix4x4 mTransformMatrix = null;
-  private float mTargetFocusRadius = 0;
-  private float mTransitionFactor = 0;
-  private long mLastUpdateTime = 0;
   private boolean mWasInFocusLastCheck = false;
   private String mTargetName = "Default target name";
 }
