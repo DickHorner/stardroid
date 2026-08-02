@@ -29,50 +29,78 @@ import com.google.android.stardroid.renderer.util.TexturedQuad;
 import javax.microedition.khronos.opengles.GL10;
 
 public class CrosshairOverlay {
+  private static final float TARGET_MARKER_SIZE_PX = 44.0f;
+  private static final float CENTER_MARKER_SIZE_PX = 26.0f;
 
   public void reloadTextures(GL10 gl, Resources res, TextureManager textureManager) {
-    // Load the crosshair texture.
     mTex = textureManager.getTextureFromResource(gl, R.drawable.crosshair);
   }
-  
+
   public void resize(GL10 gl, int screenWidth, int screenHeight) {
-    mQuad = new TexturedQuad(mTex,
-                             0, 0, 0,
-                             40.0f / screenWidth, 0, 0,
-                             0, 40.0f / screenHeight, 0);
+    mHalfWidth = screenWidth * 0.5f;
+    mHalfHeight = screenHeight * 0.5f;
+    mTargetQuad = createQuad(TARGET_MARKER_SIZE_PX);
+    mCenterQuad = createQuad(CENTER_MARKER_SIZE_PX);
   }
-    
+
   public void draw(GL10 gl, SearchHelper searchHelper, boolean nightVisionMode) {
-    // Return if the label has a negative z.
-    Vector3 position = searchHelper.getTransformedPosition();
-    if (position.z < 0) {
-      return;
-    }
-    
     gl.glPushMatrix();
     gl.glLoadIdentity();
-    
-    gl.glTranslatef(position.x, position.y, 0);
-    
+    gl.glEnable(GL10.GL_BLEND);
+    gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+
+    drawCenterMarker(gl, nightVisionMode);
+    if (searchHelper.isTargetOnScreen()) {
+      drawTargetMarker(gl, searchHelper, nightVisionMode);
+    }
+
+    gl.glDisable(GL10.GL_BLEND);
+    gl.glPopMatrix();
+  }
+
+  private void drawCenterMarker(GL10 gl, boolean nightVisionMode) {
+    if (nightVisionMode) {
+      gl.glColor4f(0.65f, 0.0f, 0.0f, 0.55f);
+    } else {
+      gl.glColor4f(0.75f, 0.75f, 0.75f, 0.55f);
+    }
+    mCenterQuad.draw(gl);
+  }
+
+  private void drawTargetMarker(GL10 gl, SearchHelper searchHelper, boolean nightVisionMode) {
+    Vector3 position = searchHelper.getTransformedPosition();
+    if (position == null || position.z <= 0) {
+      return;
+    }
+
     int period = 1000;
     long time = System.currentTimeMillis();
     float intensity = 0.7f + 0.3f * MathUtils.sin((time % period) * TWO_PI / period);
     if (nightVisionMode) {
-      gl.glColor4f(intensity, 0, 0, 0.7f);
+      gl.glColor4f(intensity, 0, 0, 0.85f);
     } else {
-      gl.glColor4f(intensity, intensity, 0, 0.7f);
+      gl.glColor4f(intensity, intensity * 0.75f, 0, 0.85f);
     }
-    
-    gl.glEnable(GL10.GL_BLEND);
-    gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);    
 
-    mQuad.draw(gl);
-    
-    gl.glDisable(GL10.GL_BLEND);
-    
+    gl.glPushMatrix();
+    // SearchHelper returns normalized device coordinates. The overlay projection
+    // uses pixel units and reverses both axes, so convert and negate here.
+    gl.glTranslatef(-position.x * mHalfWidth, -position.y * mHalfHeight, 0);
+    mTargetQuad.draw(gl);
     gl.glPopMatrix();
   }
-  
-  private TexturedQuad mQuad = null;
+
+  private TexturedQuad createQuad(float sizePx) {
+    float radius = sizePx * 0.5f;
+    return new TexturedQuad(mTex,
+                            0, 0, 0,
+                            radius, 0, 0,
+                            0, radius, 0);
+  }
+
+  private float mHalfWidth = 1;
+  private float mHalfHeight = 1;
+  private TexturedQuad mTargetQuad = null;
+  private TexturedQuad mCenterQuad = null;
   private TextureReference mTex = null;
 }
