@@ -18,8 +18,6 @@ import android.content.res.Resources;
 import android.opengl.GLU;
 import android.util.Log;
 
-import com.google.android.stardroid.math.MathUtils;
-import com.google.android.stardroid.math.Matrix4x4;
 import com.google.android.stardroid.math.Vector3;
 import com.google.android.stardroid.renderer.util.ColoredQuad;
 import com.google.android.stardroid.renderer.util.SearchHelper;
@@ -30,19 +28,15 @@ import javax.microedition.khronos.opengles.GL10;
 public class OverlayManager extends RendererObjectManager {
   private int mWidth = 2;
   private int mHeight = 2;
-  private Matrix4x4 mGeoToViewerTransform = Matrix4x4.createIdentity();
   private Vector3 mLookDir = new Vector3(0, 0, 0);
   private Vector3 mUpDir = new Vector3(0, 1, 0);
-  private Vector3 mTransformedLookDir = new Vector3(0, 0, 0);
-  private Vector3 mTransformedUpDir = new Vector3(0, 1, 0);
-  private boolean mMustUpdateTransformedOrientation = true;
 
   private boolean mSearching = false;
   private SearchHelper mSearchHelper = new SearchHelper();
   private ColoredQuad mDarkQuad = null;
   private SearchArrow mSearchArrow = new SearchArrow();
   private CrosshairOverlay mCrosshair = new CrosshairOverlay();
-  
+
   private TextureManager mTextureManager;
 
   public OverlayManager(int layer, TextureManager manager) {
@@ -60,13 +54,7 @@ public class OverlayManager extends RendererObjectManager {
     mWidth = screenWidth;
     mHeight = screenHeight;
 
-    // If the search target is within this radius of the center of the screen, the user is
-    // considered to have "found" it.
-    float searchTargetRadius = Math.min(screenWidth, screenHeight) - 20;
-    mSearchHelper.setTargetFocusRadius(searchTargetRadius);
-    mSearchHelper.resize(screenWidth, screenHeight);
-
-    mSearchArrow.resize(gl, screenWidth, screenHeight, searchTargetRadius);
+    mSearchArrow.resize(gl, screenWidth, screenHeight);
     mCrosshair.resize(gl, screenWidth, screenHeight);
 
     mDarkQuad = new ColoredQuad(0, 0, 0, 0.6f,
@@ -78,46 +66,28 @@ public class OverlayManager extends RendererObjectManager {
   public void setViewOrientation(Vector3 lookDir, Vector3 upDir) {
     mLookDir = lookDir;
     mUpDir = upDir;
-    mMustUpdateTransformedOrientation = true;
   }
 
   @Override
   public void drawInternal(GL10 gl) {
-    updateTransformedOrientationIfNecessary();
-
     setupMatrices(gl);
 
     if (mSearching) {
       mSearchHelper.setTransform(getRenderState().getTransformToDeviceMatrix());
+      mSearchHelper.setLookDirection(mLookDir);
       mSearchHelper.checkState();
 
-      float transitionFactor = mSearchHelper.getTransitionFactor();
-
-      // Darken the background.
       mDarkQuad.draw(gl);
-
-      // Draw the crosshair.
       mCrosshair.draw(gl, mSearchHelper, getRenderState().getNightVisionMode());
-
-      // Draw the search arrow.
-      mSearchArrow.draw(gl, mTransformedLookDir, mTransformedUpDir, mSearchHelper,
+      mSearchArrow.draw(gl, mLookDir, mUpDir, mSearchHelper,
                         getRenderState().getNightVisionMode());
     }
 
     restoreMatrices(gl);
   }
 
-  // viewerUp MUST be normalized.
   public void setViewerUpDirection(Vector3 viewerUp) {
-    // Log.d("OverlayManager", "Setting viewer up " + viewerUp);
-    if (MathUtils.abs(viewerUp.y) < 0.999f) {
-      Vector3 cp = viewerUp.times(new Vector3(0, 1, 0));
-      cp = cp.normalizedCopy();
-      mGeoToViewerTransform = Matrix4x4.createRotation(MathUtils.acos(viewerUp.y), cp);
-    } else {
-      mGeoToViewerTransform = Matrix4x4.createIdentity();
-    }
-    mMustUpdateTransformedOrientation = true;
+    // Search guidance is projected directly in the current look/up basis.
   }
 
   public void enableSearchOverlay(Vector3 target, String targetName) {
@@ -125,8 +95,7 @@ public class OverlayManager extends RendererObjectManager {
     mSearching = true;
     mSearchHelper.setTransform(getRenderState().getTransformToDeviceMatrix());
     mSearchHelper.setTarget(target, targetName);
-    Vector3 transformedPosition = Matrix4x4.multiplyMV(mGeoToViewerTransform, target);
-    mSearchArrow.setTarget(transformedPosition);
+    mSearchArrow.setTarget(target);
     queueForReload(false);
   }
 
@@ -139,33 +108,24 @@ public class OverlayManager extends RendererObjectManager {
   }
 
   private void setupMatrices(GL10 gl) {
-    // Save the matrix values.
+    float halfWidth = mWidth / 2.0f;
+    float halfHeight = mHeight / 2.0f;
+
     gl.glMatrixMode(GL10.GL_PROJECTION);
     gl.glPushMatrix();
     gl.glLoadIdentity();
+    GLU.gluOrtho2D(gl, -halfWidth, halfWidth, -halfHeight, halfHeight);
 
     gl.glMatrixMode(GL10.GL_MODELVIEW);
     gl.glPushMatrix();
-    float left = mWidth / 2.0f;
-    float bottom = mHeight / 2.0f;
     gl.glLoadIdentity();
-    GLU.gluOrtho2D(gl, left, -left, bottom, -bottom);
   }
 
   private void restoreMatrices(GL10 gl) {
-    // Restore the matrices.
     gl.glMatrixMode(GL10.GL_PROJECTION);
     gl.glPopMatrix();
 
     gl.glMatrixMode(GL10.GL_MODELVIEW);
     gl.glPopMatrix();
-  }
-
-  private void updateTransformedOrientationIfNecessary() {
-    if (mMustUpdateTransformedOrientation && mSearching) {
-      mTransformedLookDir = Matrix4x4.multiplyMV(mGeoToViewerTransform, mLookDir);
-      mTransformedUpDir = Matrix4x4.multiplyMV(mGeoToViewerTransform, mUpDir);
-      mMustUpdateTransformedOrientation = false;
-    }
   }
 }

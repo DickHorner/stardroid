@@ -61,7 +61,7 @@
                 android:layout_toEndOf="@id/search_icon"
                 android:layout_toStartOf="@+id/add_to_observation_list_button"
                 android:paddingStart="10dip"
-                android:text="@string/search_overlay_title"
+                android:text="@string/search_guidance_prompt"
                 android:textAppearance="?android:attr/textAppearanceSmall" />
 
             <com.google.android.stardroid.observing.ObservationListAddButton
