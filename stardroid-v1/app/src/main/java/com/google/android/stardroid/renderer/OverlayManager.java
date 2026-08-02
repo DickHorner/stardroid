@@ -127,16 +127,17 @@ public class OverlayManager extends RendererObjectManager {
   }
 
   private void setupMatrices(GL10 gl) {
+    float halfWidth = mWidth / 2.0f;
+    float halfHeight = mHeight / 2.0f;
+
     gl.glMatrixMode(GL10.GL_PROJECTION);
     gl.glPushMatrix();
     gl.glLoadIdentity();
+    GLU.gluOrtho2D(gl, -halfWidth, halfWidth, -halfHeight, halfHeight);
 
     gl.glMatrixMode(GL10.GL_MODELVIEW);
     gl.glPushMatrix();
-    float halfWidth = mWidth / 2.0f;
-    float halfHeight = mHeight / 2.0f;
     gl.glLoadIdentity();
-    GLU.gluOrtho2D(gl, -halfWidth, halfWidth, -halfHeight, halfHeight);
   }
 
   private void restoreMatrices(GL10 gl) {
