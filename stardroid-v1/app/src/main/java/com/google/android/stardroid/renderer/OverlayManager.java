@@ -54,7 +54,6 @@ public class OverlayManager extends RendererObjectManager {
     mWidth = screenWidth;
     mHeight = screenHeight;
 
-    mSearchHelper.resize(screenWidth, screenHeight);
     mSearchArrow.resize(gl, screenWidth, screenHeight);
     mCrosshair.resize(gl, screenWidth, screenHeight);
 
