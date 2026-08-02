@@ -23,11 +23,6 @@ public class SearchHelper {
   static final float CENTERED_EXIT_DEGREES = 0.15f;
   private static final float TARGET_SCREEN_MARGIN = 0.92f;
 
-  public void resize(int width, int height) {
-    // Kept as part of the renderer lifecycle. Screen-space guidance uses normalized
-    // device coordinates and therefore needs no cached pixel dimensions here.
-  }
-
   public void setTarget(Vector3 target, String targetName) {
     mTargetName = targetName;
     mTarget = target.normalizedCopy();
@@ -67,11 +62,6 @@ public class SearchHelper {
     float dot = mTarget.dot(mLookDirection);
     dot = Math.max(-1.0f, Math.min(1.0f, dot));
     return (float) Math.toDegrees(MathUtils.acos(dot));
-  }
-
-  // Retained for callers that still model the old animated focus transition.
-  public float getTransitionFactor() {
-    return mWasInFocusLastCheck ? 1.0f : 0.0f;
   }
 
   public void checkState() {
