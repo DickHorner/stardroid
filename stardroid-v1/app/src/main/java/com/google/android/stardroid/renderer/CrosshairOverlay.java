@@ -83,9 +83,8 @@ public class CrosshairOverlay {
     }
 
     gl.glPushMatrix();
-    // SearchHelper returns normalized device coordinates. The overlay projection
-    // uses pixel units and reverses both axes, so convert and negate here.
-    gl.glTranslatef(-position.x * mHalfWidth, -position.y * mHalfHeight, 0);
+    // SearchHelper returns normalized device coordinates; the overlay uses pixel units.
+    gl.glTranslatef(position.x * mHalfWidth, position.y * mHalfHeight, 0);
     mTargetQuad.draw(gl);
     gl.glPopMatrix();
   }
