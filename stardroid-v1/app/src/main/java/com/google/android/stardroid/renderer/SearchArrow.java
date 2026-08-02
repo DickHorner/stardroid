@@ -29,6 +29,8 @@ import javax.microedition.khronos.opengles.GL10;
 public class SearchArrow {
   private static final float ARROW_SIZE = 0.11f;
   private static final float MIN_DIRECTION_LENGTH = 0.000001f;
+  private static final float[] DAY_ARROW_COLOR = {1.0f, 0.55f, 0.0f, 0.0f};
+  private static final float[] NIGHT_ARROW_COLOR = {0.8f, 0.0f, 0.0f, 0.0f};
 
   private Vector3 mTarget = new Vector3(0, 0, 1);
   private TexturedQuad mArrowQuad = null;
@@ -88,18 +90,13 @@ public class SearchArrow {
     gl.glTexEnvfv(
         GL10.GL_TEXTURE_ENV,
         GL10.GL_TEXTURE_ENV_COLOR,
-        nightVisionMode
-            ? new float[] {0.8f, 0.0f, 0.0f, 0.0f}
-            : new float[] {1.0f, 0.55f, 0.0f, 0.0f},
+        nightVisionMode ? NIGHT_ARROW_COLOR : DAY_ARROW_COLOR,
         0);
     gl.glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
 
     gl.glPushMatrix();
-    // Overlay coordinates are inverted on both axes. Negating the screen-space
-    // position and rotating the right-pointing texture by 180 degrees preserves
-    // the intended on-screen movement direction.
-    gl.glTranslatef(-marker.x, -marker.y, 0);
-    gl.glRotatef(marker.angleDegrees + 180.0f, 0, 0, 1);
+    gl.glTranslatef(marker.x, marker.y, 0);
+    gl.glRotatef(marker.angleDegrees, 0, 0, 1);
     gl.glScalef(mArrowSizePixels, mArrowSizePixels, mArrowSizePixels);
     mArrowQuad.draw(gl);
     gl.glPopMatrix();
